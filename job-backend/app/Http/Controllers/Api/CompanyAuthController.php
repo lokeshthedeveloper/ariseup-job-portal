@@ -24,7 +24,145 @@ class CompanyAuthController extends Controller
     }
 
     /**
-     * Register a new company
+     * Step 1: Register User Details
+     */
+    public function registerStep1(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'phone' => 'required|string|max:20',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            // Create user
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'phone' => $request->phone,
+                'role' => 'company',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User details registered successfully.',
+                'user_id' => $user->id,
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Registration failed: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Step 2: Register Company Details
+     */
+    public function registerStep2(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|exists:users,id',
+            'company_name' => 'required|string|max:255',
+            'company_type' => 'required|in:company,consultancy',
+            'verification_method' => 'required|in:email,phone',
+            // Optional fields
+            'logo' => 'nullable|string',
+            'description' => 'nullable|string',
+            'industry' => 'nullable|string',
+            'company_size' => 'nullable|string',
+            'location' => 'nullable|string',
+            'website' => 'nullable|string',
+            'social_media_links' => 'nullable|json',
+            'job_categories' => 'nullable|json',
+            'about_us' => 'nullable|string',
+            'open_positions_note' => 'nullable|string',
+            'contact_info' => 'nullable|json',
+            'employee_benefits' => 'nullable|string',
+            'work_culture' => 'nullable|string',
+            'notable_clients_projects' => 'nullable|string',
+            'employee_reviews' => 'nullable|string',
+            'diversity_inclusion' => 'nullable|string',
+            'company_video' => 'nullable|string',
+            'application_process' => 'nullable|string',
+            'legal_information' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $user = User::find($request->user_id);
+
+            // Check if user already has a company
+            if ($user->company) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User already has a registered company.',
+                ], 400);
+            }
+
+            // Create company
+            $company = Company::create([
+                'user_id' => $user->id,
+                'name' => $request->company_name,
+                'company_type' => $request->company_type,
+                'phone' => $user->phone, // Use user's phone for company initially
+                'logo' => $request->logo,
+                'description' => $request->description,
+                'industry' => $request->industry,
+                'company_size' => $request->company_size,
+                'location' => $request->location,
+                'website' => $request->website,
+                'social_media_links' => $request->social_media_links,
+                'job_categories' => $request->job_categories,
+                'about_us' => $request->about_us,
+                'open_positions_note' => $request->open_positions_note,
+                'contact_info' => $request->contact_info,
+                'employee_benefits' => $request->employee_benefits,
+                'work_culture' => $request->work_culture,
+                'notable_clients_projects' => $request->notable_clients_projects,
+                'employee_reviews' => $request->employee_reviews,
+                'diversity_inclusion' => $request->diversity_inclusion,
+                'company_video' => $request->company_video,
+                'application_process' => $request->application_process,
+                'legal_information' => $request->legal_information,
+            ]);
+
+            // Send OTP based on verification method
+            $identifier = $request->verification_method === 'email' ? $user->email : $user->phone;
+            $otpResult = $this->otpService->generateAndSend($identifier, $request->verification_method);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Company details registered successfully. Please verify your ' . $request->verification_method,
+                'user_id' => $user->id,
+                'verification_method' => $request->verification_method,
+                'otp_expires_at' => $otpResult['expires_at'],
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Registration failed: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Register a new company (Full registration - kept for backward compatibility)
      */
     public function register(Request $request)
     {

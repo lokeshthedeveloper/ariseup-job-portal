@@ -31,6 +31,8 @@ use App\Http\Controllers\Api\CityController;
 
 Route::prefix('company')->group(function () {
     // Public routes (no authentication required)
+    Route::post('/register-step1', [CompanyAuthController::class, 'registerStep1']);
+    Route::post('/register-step2', [CompanyAuthController::class, 'registerStep2']);
     Route::post('/register', [CompanyAuthController::class, 'register']);
     Route::post('/verify-otp', [CompanyAuthController::class, 'verifyOtp']);
     Route::post('/resend-otp', [CompanyAuthController::class, 'resendOtp']);

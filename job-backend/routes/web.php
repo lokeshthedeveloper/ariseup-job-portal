@@ -17,35 +17,39 @@ use App\Http\Controllers\Admin\JobRoleController;
 use App\Http\Controllers\Admin\CountryController;
 use App\Http\Controllers\Admin\StateController;
 use App\Http\Controllers\Admin\CityController;
+use App\Http\Controllers\BlogController;
+use App\Http\Controllers\ContactController;
 
+// Frontend Routes
 Route::get('/', function () {
-    return view('welcome');
-});
+    return view('frontend.home');
+})->name('home');
 
 Route::get('/test-route', function () {
     return 'Test route works!';
 });
 
-// Company Registration Routes
-Route::get('/company-registration', function () {
-    return view('company-registration.index');
-})->name('company.index');
+// Blog Routes
+Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 
-Route::get('/company-registration/register', function () {
-    return view('company-registration.register');
-})->name('company.register');
+// Contact Routes
+Route::get('/contact', [ContactController::class, 'index'])->name('contact');
+Route::post('/contact', [ContactController::class, 'submit'])->name('contact.submit');
 
-Route::get('/company-registration/login', function () {
-    return view('company-registration.login');
-})->name('company.login');
+use App\Http\Controllers\Frontend\CompanyController as FrontendCompanyController;
 
-Route::get('/company-registration/verify-otp', function () {
-    return view('company-registration.verify-otp');
-})->name('company.verify-otp');
-
-Route::get('/company-registration/success', function () {
-    return view('company-registration.success');
-})->name('company.success');
+// Company Authentication Routes
+Route::prefix('company')->name('company.')->group(function () {
+    Route::get('/login', [FrontendCompanyController::class, 'login'])->name('login');
+    Route::post('/login', [FrontendCompanyController::class, 'loginSubmit'])->name('login.submit');
+    Route::get('/register', [FrontendCompanyController::class, 'register'])->name('register');
+    Route::get('/forgot-password', [FrontendCompanyController::class, 'forgotPassword'])->name('forgot-password');
+    Route::post('/forgot-password', [FrontendCompanyController::class, 'forgotPasswordSubmit'])->name('forgot-password.submit');
+    Route::get('/reset-password/{token}', [FrontendCompanyController::class, 'resetPassword'])->name('reset-password');
+    Route::post('/reset-password', [FrontendCompanyController::class, 'resetPasswordSubmit'])->name('reset-password.submit');
+    Route::get('/dashboard', [FrontendCompanyController::class, 'dashboard'])->name('dashboard');
+});
 
 // Admin Authentication Routes
 Route::prefix('admin')->name('admin.')->group(function () {
