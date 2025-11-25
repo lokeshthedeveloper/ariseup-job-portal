@@ -29,16 +29,9 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        if (Auth::attempt($credentials, $request->filled('remember'))) {
-            if (Auth::user()->isAdmin()) {
-                $request->session()->regenerate();
-                return redirect()->intended('/admin/dashboard')->with('success', 'Welcome back!');
-            } else {
-                Auth::logout();
-                throw ValidationException::withMessages([
-                    'email' => 'You do not have admin access.',
-                ]);
-            }
+        if (Auth::guard('admin')->attempt($credentials, $request->filled('remember'))) {
+            $request->session()->regenerate();
+            return redirect()->intended('/admin/dashboard')->with('success', 'Welcome back!');
         }
 
         throw ValidationException::withMessages([
@@ -51,7 +44,7 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        Auth::logout();
+        Auth::guard('admin')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
@@ -73,7 +66,7 @@ class AuthController extends Controller
     {
         $request->validate(['email' => 'required|email']);
 
-        $status = Password::sendResetLink($request->only('email'));
+        $status = Password::broker('admins')->sendResetLink($request->only('email'));
 
         return $status === Password::RESET_LINK_SENT
             ? back()->with('success', __($status))
@@ -99,7 +92,7 @@ class AuthController extends Controller
             'password' => 'required|min:8|confirmed',
         ]);
 
-        $status = Password::reset(
+        $status = Password::broker('admins')->reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user, $password) {
                 $user->forceFill([
