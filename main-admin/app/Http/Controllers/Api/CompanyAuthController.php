@@ -10,6 +10,7 @@ use App\Services\SocialAuthService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class CompanyAuthController extends Controller
@@ -32,7 +33,7 @@ class CompanyAuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'phone' => 'required|string|max:20',
+            'phone' => 'required|string|max:20|unique:users',
         ]);
 
         if ($validator->fails()) {
@@ -51,6 +52,9 @@ class CompanyAuthController extends Controller
                 'phone' => $request->phone,
                 'role' => 'company',
             ]);
+
+            // Log the user in
+            Auth::login($user);
 
             return response()->json([
                 'success' => true,
@@ -74,7 +78,6 @@ class CompanyAuthController extends Controller
             'user_id' => 'required|exists:users,id',
             'company_name' => 'required|string|max:255',
             'company_type' => 'required|in:company,consultancy',
-            'verification_method' => 'required|in:email,phone',
             // Optional fields
             'logo' => 'nullable|string',
             'description' => 'nullable|string',
@@ -118,12 +121,6 @@ class CompanyAuthController extends Controller
                 ], 400);
             }
 
-            // Get Location Names
-            $countryName = \App\Models\Country::find($request->country)->name;
-            $stateName = \App\Models\State::find($request->state)->name;
-            $districtName = \App\Models\District::find($request->district)->name;
-            $cityName = \App\Models\City::find($request->city)->name;
-
             // Create company
             $company = Company::create([
                 'user_id' => $user->id,
@@ -134,11 +131,11 @@ class CompanyAuthController extends Controller
                 'description' => $request->description,
                 'industry' => $request->industry,
                 'company_size' => $request->company_size,
-                'country' => $countryName,
-                'state' => $stateName,
-                'district' => $districtName,
-                'city' => $cityName,
-                'address' => "$cityName, $stateName, $countryName",
+                'country' => $request->country,
+                'state' => $request->state,
+                'district' => $request->district,
+                'city' => $request->city,
+                'address' => null,
                 'website' => $request->website,
                 'social_media_links' => $request->social_media_links,
                 'job_categories' => $request->job_categories,
@@ -155,16 +152,10 @@ class CompanyAuthController extends Controller
                 'legal_information' => $request->legal_information,
             ]);
 
-            // Send OTP based on verification method
-            $identifier = $request->verification_method === 'email' ? $user->email : $user->phone;
-            $otpResult = $this->otpService->generateAndSend($identifier, $request->verification_method);
-
             return response()->json([
                 'success' => true,
-                'message' => 'Company details registered successfully. Please verify your ' . $request->verification_method,
+                'message' => 'Company details registered successfully.',
                 'user_id' => $user->id,
-                'verification_method' => $request->verification_method,
-                'otp_expires_at' => $otpResult['expires_at'],
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
@@ -201,7 +192,7 @@ class CompanyAuthController extends Controller
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
-                'password' => Hash::make($request->password),
+                'password' => $request->password,
                 'phone' => $request->phone,
                 'role' => 'company',
             ]);
@@ -241,7 +232,7 @@ class CompanyAuthController extends Controller
         $validator = Validator::make($request->all(), [
             'identifier' => 'required|string',
             'type' => 'required|in:email,phone',
-            'otp' => 'required|string|size:6',
+            'otp' => 'required|string|between:4,6',
         ]);
 
         if ($validator->fails()) {
@@ -256,6 +247,9 @@ class CompanyAuthController extends Controller
         if (!$result['success']) {
             return response()->json($result, 400);
         }
+
+        // Initialize user variable
+        $user = null;
 
         // Update user verification status
         if ($request->type === 'email') {
@@ -276,12 +270,110 @@ class CompanyAuthController extends Controller
             }
         }
 
+        // Check if user was found
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found',
+            ], 404);
+        }
+
+        // Log the user in (refresh session)
+        Auth::login($user);
+
         // Generate API token
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'success' => true,
             'message' => $result['message'],
+            'user' => $user->load('company'),
+            'token' => $token,
+        ], 200);
+    }
+
+    /**
+     * Verify both Email and Phone OTPs in a single request
+     */
+    public function verifyBothOtps(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'phone' => 'required|string',
+            'email_otp' => 'nullable|string|between:4,6',
+            'phone_otp' => 'nullable|string|between:4,6',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found',
+            ], 404);
+        }
+
+        $verificationResults = [];
+        $hasError = false;
+
+        // Verify Email OTP if provided
+        if ($request->email_otp) {
+            $emailResult = $this->otpService->verify($request->email, 'email', $request->email_otp);
+
+            if ($emailResult['success']) {
+                $user->update(['email_verified_at' => now()]);
+                if ($user->company) {
+                    $user->company->update(['email_verified' => true]);
+                }
+                $verificationResults['email'] = 'Email verified successfully';
+            } else {
+                $hasError = true;
+                $verificationResults['email'] = $emailResult['message'];
+            }
+        }
+
+        // Verify Phone OTP if provided
+        if ($request->phone_otp) {
+            $phoneResult = $this->otpService->verify($request->phone, 'phone', $request->phone_otp);
+
+            if ($phoneResult['success']) {
+                $user->update(['phone_verified_at' => now()]);
+                if ($user->company) {
+                    $user->company->update(['phone_verified_at' => now()]);
+                }
+                $verificationResults['phone'] = 'Phone verified successfully';
+            } else {
+                $hasError = true;
+                $verificationResults['phone'] = $phoneResult['message'];
+            }
+        }
+
+        // If there were errors, return them
+        if ($hasError) {
+            return response()->json([
+                'success' => false,
+                'message' => 'One or more verifications failed',
+                'results' => $verificationResults,
+            ], 400);
+        }
+
+        // Log the user in (refresh session)
+        Auth::login($user);
+
+        // Generate API token
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Verification successful',
+            'results' => $verificationResults,
             'user' => $user->load('company'),
             'token' => $token,
         ], 200);
@@ -343,10 +435,27 @@ class CompanyAuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        // Determine next step
+        $nextStep = 'dashboard';
+        if (!$user->company) {
+            $nextStep = 2; // Company details not filled
+        } else {
+            // Check verification
+            $isVerified = false;
+            if ($user->company->email_verified || $user->company->phone_verified_at) {
+                $isVerified = true;
+            }
+
+            if (!$isVerified) {
+                $nextStep = 3; // Verification needed
+            }
+        }
+
         return response()->json([
             'success' => true,
             'user' => $user->load('company'),
             'token' => $token,
+            'next_step' => $nextStep,
         ], 200);
     }
 

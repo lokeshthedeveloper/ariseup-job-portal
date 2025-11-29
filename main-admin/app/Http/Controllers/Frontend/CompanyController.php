@@ -38,6 +38,16 @@ class CompanyController extends Controller
         if (\Auth::attempt($request->only('email', 'password'), $request->filled('remember'))) {
             $user = \Auth::user();
             if ($user->role === 'company') {
+                // Check registration status
+                if (!$user->company) {
+                    return redirect()->route('company.register', ['step' => 2]);
+                }
+
+                // Check verification
+                if (!$user->company->email_verified && !$user->company->phone_verified_at) {
+                    return redirect()->route('company.verify-otp');
+                }
+
                 return redirect()->route('company.dashboard');
             }
 
@@ -62,10 +72,35 @@ class CompanyController extends Controller
     /**
      * Show the company registration form.
      */
-    public function register()
+    public function register(Request $request)
     {
+        $initialStep = 1;
+        if (\Auth::check()) {
+            $user = \Auth::user();
+
+            // Check if user has completed all registration steps
+            if ($user->company && ($user->company->email_verified || $user->company->phone_verified_at)) {
+                // User is fully registered - don't allow them to go back
+                return redirect()->route('company.dashboard')
+                    ->with('info', 'Your profile is already complete. If you need to make changes, please contact the administrator.');
+            }
+
+            if (!$user->company) {
+                $initialStep = 2;
+            } elseif (!$user->company->email_verified && !$user->company->phone_verified_at) {
+                // User has company but not verified - redirect to OTP verification
+                return redirect()->route('company.verify-otp');
+            }
+        }
+
+        if ($request->has('step')) {
+            $initialStep = (int) $request->step;
+        }
+
+        $userId = \Auth::id();
+
         $countries = \App\Models\Country::where('status', 1)->get();
-        return view('company.auth.register', compact('countries'));
+        return view('company.auth.register', compact('countries', 'initialStep', 'userId'));
     }
 
     /**
@@ -73,7 +108,34 @@ class CompanyController extends Controller
      */
     public function showVerifyOtp()
     {
-        return view('company.auth.verify-otp');
+        $user = \Auth::user();
+        if (!$user) {
+            return redirect()->route('company.login');
+        }
+
+        // Check which verifications are needed
+        $emailVerified = $user->email_verified_at !== null;
+        $phoneVerified = $user->company && $user->company->phone_verified_at !== null;
+
+        // If both are already verified, redirect to dashboard
+        if ($emailVerified && $phoneVerified) {
+            return redirect()->route('company.dashboard')
+                ->with('success', 'Your account is already verified.');
+        }
+
+        // Get verification needs from session (set by middleware) or determine from user
+        $verificationNeeded = session('verification_needed', [
+            'email' => !$emailVerified,
+            'phone' => !$phoneVerified,
+        ]);
+
+        return view('company.auth.verify-otp', [
+            'email' => $user->email,
+            'phone' => $user->phone ?? $user->company->phone ?? '',
+            'emailVerified' => $emailVerified,
+            'phoneVerified' => $phoneVerified,
+            'verificationNeeded' => $verificationNeeded,
+        ]);
     }
 
     public function getStates($country_id)
@@ -115,7 +177,7 @@ class CompanyController extends Controller
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => $request->password,
             'role' => 'company', // Ensure role is set
         ]);
 
@@ -193,7 +255,7 @@ class CompanyController extends Controller
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user, $password) {
                 $user->forceFill([
-                    'password' => \Hash::make($password)
+                    'password' => $password
                 ])->setRememberToken(\Str::random(60));
 
                 $user->save();
@@ -214,6 +276,20 @@ class CompanyController extends Controller
      */
     public function dashboard()
     {
+        $user = \Auth::user();
+
+        // Check if user has completed company details
+        if (!$user->company) {
+            return redirect()->route('company.register', ['step' => 2])
+                ->with('error', 'Please complete your company details first.');
+        }
+
+        // Check if user has verified their account
+        if (!$user->company->email_verified && !$user->company->phone_verified_at) {
+            return redirect()->route('company.verify-otp')
+                ->with('error', 'Please verify your account first.');
+        }
+
         $data = [
             'employee_count' => 120,
             'employer_count' => 43,
@@ -233,6 +309,18 @@ class CompanyController extends Controller
     public function profile()
     {
         $user = \Auth::user();
+
+        // Check if user has completed registration
+        if (!$user->company) {
+            return redirect()->route('company.register', ['step' => 2])
+                ->with('error', 'Please complete your company details first.');
+        }
+
+        if (!$user->company->email_verified && !$user->company->phone_verified_at) {
+            return redirect()->route('company.verify-otp')
+                ->with('error', 'Please verify your account first.');
+        }
+
         $company = $user->company;
 
         if (!$company) {
@@ -305,6 +393,18 @@ class CompanyController extends Controller
     public function themeSettings()
     {
         $user = \Auth::user();
+
+        // Check if user has completed registration
+        if (!$user->company) {
+            return redirect()->route('company.register', ['step' => 2])
+                ->with('error', 'Please complete your company details first.');
+        }
+
+        if (!$user->company->email_verified && !$user->company->phone_verified_at) {
+            return redirect()->route('company.verify-otp')
+                ->with('error', 'Please verify your account first.');
+        }
+
         $company = $user->company;
 
         if (!$company) {

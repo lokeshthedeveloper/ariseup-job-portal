@@ -1,11 +1,18 @@
 // Configuration
-const API_BASE_URL = window.location.origin + "/api/company";
+const API_BASE_URL = window.location.origin + "/company";
+
+// Get CSRF token
+const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+console.log('CSRF Token:', csrfToken);
 
 // Current step tracker
-let currentStep = 1;
+let currentStep = window.initialStep || 1;
+console.log('Current Step initialized to:', currentStep);
 
 // Form data storage
-let formData = {};
+let formData = {
+    user_id: window.userId || null
+};
 
 // Step navigation
 async function nextStep(step) {
@@ -21,6 +28,14 @@ async function nextStep(step) {
     if (currentStep === 1 && step === 2) {
         const success = await registerStep1();
         if (!success) return;
+    }
+
+    // Step 2 -> Complete: Register Company Details and redirect to OTP
+    if (currentStep === 2) {
+        const success = await registerStep2();
+        if (!success) return;
+        // registerStep2 will handle the redirect
+        return;
     }
 
     // Hide current step
@@ -234,18 +249,22 @@ async function registerStep1() {
     btn.innerHTML = "Processing...";
 
     try {
+        // Combine country code and phone
+        const fullPhone = (formData.country_code || '') + formData.phone;
+
         const response = await fetch(`${API_BASE_URL}/register-step1`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 Accept: "application/json",
+                "X-CSRF-TOKEN": csrfToken,
             },
             body: JSON.stringify({
                 name: formData.name,
                 email: formData.email,
                 password: formData.password,
                 password_confirmation: formData.password_confirmation,
-                phone: formData.phone,
+                phone: fullPhone,
             }),
         });
 
@@ -262,7 +281,22 @@ async function registerStep1() {
                 Object.keys(data.errors).forEach((key) => {
                     const input = document.querySelector(`[name="${key}"]`);
                     if (input) {
-                        showError(input, data.errors[key][0]);
+                        let message = data.errors[key][0];
+                        if (key === 'email' && message.includes('taken')) {
+                            message = 'Email already registered. <a href="/company/login">Login here</a>';
+                            // Show error with HTML
+                            const formGroup = input.closest(".form-group");
+                            let errorElement = formGroup.querySelector(".error-message");
+                            if (!errorElement) {
+                                errorElement = document.createElement("div");
+                                errorElement.className = "error-message text-danger small mt-1";
+                                formGroup.appendChild(errorElement);
+                            }
+                            input.style.borderColor = "#e74c3c";
+                            errorElement.innerHTML = message;
+                        } else {
+                            showError(input, message);
+                        }
                     }
                 });
             } else {
@@ -274,6 +308,67 @@ async function registerStep1() {
         }
     } catch (error) {
         console.error("Step 1 Error:", error);
+        showAlert("An error occurred. Please try again.", "error");
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        return false;
+    }
+}
+
+// Register Step 2: Company Details
+async function registerStep2() {
+    const btn = document.querySelector("#step2 button[onclick*='nextStep']");
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = "Processing...";
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/register-step2`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+                "X-CSRF-TOKEN": csrfToken,
+            },
+            body: JSON.stringify({
+                user_id: formData.user_id,
+                company_name: formData.company_name,
+                company_type: formData.company_type,
+                industry: formData.industry,
+                company_size: formData.company_size,
+                country: formData.country,
+                state: formData.state,
+                district: formData.district,
+                city: formData.city,
+                website: formData.website,
+                about_us: formData.about_us,
+            }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            // Redirect to OTP verification page
+            window.location.href = '/company-registration/verify-otp';
+            return true;
+        } else {
+            // Handle errors
+            if (data.errors) {
+                Object.keys(data.errors).forEach((key) => {
+                    const input = document.querySelector(`[name="${key}"]`);
+                    if (input) {
+                        showError(input, data.errors[key][0]);
+                    }
+                });
+            } else {
+                showAlert(data.message || "Company registration failed", "error");
+            }
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            return false;
+        }
+    } catch (error) {
+        console.error("Step 2 Error:", error);
         showAlert("An error occurred. Please try again.", "error");
         btn.disabled = false;
         btn.innerHTML = originalText;
@@ -415,6 +510,33 @@ document.addEventListener("DOMContentLoaded", function () {
     // Clear any stored verification data
     sessionStorage.removeItem("verification_data");
 
-    // Focus first input
-    document.getElementById("name").focus();
+    // If starting from a step > 1, show that step
+    if (currentStep > 1) {
+        // Hide step 1
+        document.getElementById("step1").classList.remove("active");
+        document.querySelector(".steps-progress .step-item:nth-child(1)").classList.remove("active");
+        
+        // Show current step
+        document.getElementById(`step${currentStep}`).classList.add("active");
+        document.querySelector(`.steps-progress .step-item:nth-child(${currentStep})`).classList.add("active");
+        
+        // Mark previous steps as completed (optional visual improvement)
+        for (let i = 1; i < currentStep; i++) {
+             document.querySelector(`.steps-progress .step-item:nth-child(${i})`).classList.add("completed");
+        }
+    } else {
+        // Focus first input
+        document.getElementById("name").focus();
+    }
+
+    // Disable back buttons if user is authenticated (resuming registration)
+    if (window.userId) {
+        const backButtons = document.querySelectorAll('button[onclick^="prevStep"]');
+        backButtons.forEach(button => {
+            button.disabled = true;
+            button.style.opacity = '0.5';
+            button.style.cursor = 'not-allowed';
+            button.title = 'You cannot go back during profile completion';
+        });
+    }
 });

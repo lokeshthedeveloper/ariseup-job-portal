@@ -23,6 +23,22 @@
                         <div class="card-body p-4">
                             <h4 class="card-title text-center mb-4">Login to your account</h4>
 
+                            @if ($errors->any())
+                                <div class="alert alert-danger">
+                                    <ul class="mb-0">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+
+                            @if (session('status'))
+                                <div class="alert alert-success">
+                                    {{ session('status') }}
+                                </div>
+                            @endif
+
                             <form action="{{ route('company.login.submit') }}" method="POST">
                                 @csrf
                                 <div class="mb-3">

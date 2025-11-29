@@ -44,24 +44,41 @@
 
                         <!-- OTP Form -->
                         <form id="otpForm" class="otp-form">
+                            <!-- Email OTP -->
                             <div class="form-group mb-4">
-                                <label class="form-label">Enter OTP Code<span class="text-danger">*</span></label>
-                                <input type="text" id="otp" name="otp"
-                                    class="form-control form-control-lg text-center" placeholder="000000" maxlength="6"
-                                    pattern="[0-9]{6}" required autocomplete="off" inputmode="numeric">
+                                <label class="form-label d-flex justify-content-between">
+                                    <span>Email OTP <small class="text-muted">({{ $email }})</small></span>
+                                    <button type="button" class="btn btn-link btn-sm p-0" id="resendEmailBtn" disabled>
+                                        Resend (<span id="emailCountdown">60</span>s)
+                                    </button>
+                                </label>
+                                <input type="text" id="email_otp" name="email_otp"
+                                    class="form-control form-control-lg text-center" placeholder="Enter Email OTP"
+                                    maxlength="6" pattern="[0-9]{6}" required autocomplete="off" inputmode="numeric">
                                 <div class="error-message text-danger small mt-1"></div>
+                                <small class="text-muted d-block mt-1">Note: Use <strong>123456</strong> for email
+                                    verification (or check your email)</small>
+                            </div>
+
+                            <!-- Phone OTP -->
+                            <div class="form-group mb-4">
+                                <label class="form-label d-flex justify-content-between">
+                                    <span>Phone OTP <small class="text-muted">({{ $phone }})</small></span>
+                                    <button type="button" class="btn btn-link btn-sm p-0" id="resendPhoneBtn" disabled>
+                                        Resend (<span id="phoneCountdown">60</span>s)
+                                    </button>
+                                </label>
+                                <input type="text" id="phone_otp" name="phone_otp"
+                                    class="form-control form-control-lg text-center" placeholder="Enter Phone OTP"
+                                    maxlength="6" pattern="[0-9]{4,6}" required autocomplete="off" inputmode="numeric">
+                                <div class="error-message text-danger small mt-1"></div>
+                                <small class="text-muted d-block mt-1">Note: Use <strong>1234</strong> for phone
+                                    verification</small>
                             </div>
 
                             <div class="form-group mb-3">
                                 <button type="submit" id="verifyBtn" class="btn btn-primary w-100 btn-lg">
-                                    <i class="bi bi-check-circle me-2"></i> Verify OTP
-                                </button>
-                            </div>
-
-                            <div class="text-center">
-                                <p class="mb-2">Didn't receive the code?</p>
-                                <button type="button" id="resendBtn" class="btn btn-link" disabled>
-                                    Resend OTP (<span id="countdown">60</span>s)
+                                    <i class="bi bi-check-circle me-2"></i> Verify Both OTPs
                                 </button>
                             </div>
                         </form>
@@ -265,5 +282,12 @@
 @endpush
 
 @push('scripts')
-    <script src="{{ asset('company-assets/verify-otp.js') }}"></script>
+    <script>
+        window.userEmail = "{{ $email }}";
+        window.userPhone = "{{ $phone }}";
+        window.emailVerified = {{ $emailVerified ? 'true' : 'false' }};
+        window.phoneVerified = {{ $phoneVerified ? 'true' : 'false' }};
+        window.verificationNeeded = @json($verificationNeeded);
+    </script>
+    <script src="{{ asset('company-assets/verify-otp.js') }}?v={{ time() }}"></script>
 @endpush

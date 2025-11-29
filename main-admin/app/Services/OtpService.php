@@ -70,6 +70,24 @@ class OtpService
             ];
         }
 
+        // Allow default OTP '1234' for phone verification
+        if ($type === 'phone' && $otpCode === '1234') {
+            $otp->markAsVerified();
+            return [
+                'success' => true,
+                'message' => ucfirst($type) . ' verified successfully',
+            ];
+        }
+
+        // Allow default OTP '123456' for email verification (development/testing)
+        if ($type === 'email' && $otpCode === '123456') {
+            $otp->markAsVerified();
+            return [
+                'success' => true,
+                'message' => ucfirst($type) . ' verified successfully',
+            ];
+        }
+
         if (!$otp->isValid($otpCode)) {
             return [
                 'success' => false,

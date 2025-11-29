@@ -14,6 +14,16 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin' => \App\Http\Middleware\IsAdmin::class,
+            'company.verified' => \App\Http\Middleware\EnsureCompanyVerified::class,
+        ]);
+
+        // Exclude API-style routes from CSRF verification
+        $middleware->validateCsrfTokens(except: [
+            'company/register-step1',
+            'company/register-step2',
+            'company/verify-otp',
+            'company/verify-both-otps',
+            'company/resend-otp',
         ]);
 
         // Redirect unauthenticated users to appropriate login page

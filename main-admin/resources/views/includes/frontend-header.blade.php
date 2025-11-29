@@ -81,6 +81,8 @@
                     <a class="cta-btn d-none d-sm-block" href="{{ route('company.register') }}">Register Company</a>
                 @endif
             @else
+                <a class="cta-btn d-none d-sm-block me-2" href="{{ route('company.login') }}"
+                    style="background: transparent; color: var(--nav-color); border: 1px solid var(--nav-color);">Login</a>
                 <a class="cta-btn d-none d-sm-block" href="{{ route('company.register') }}">Register Company</a>
             @endauth
 

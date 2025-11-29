@@ -31,8 +31,10 @@
 
                         <!-- Header -->
                         <div class="form-heads text-center mb-4">
-                            <h3>Create Your Company Profile</h3>
-                            <p class="text-muted">Start hiring the best talent today</p>
+                            <h3>{{ $initialStep > 1 ? 'Complete Your Profile' : 'Create Your Company Profile' }}</h3>
+                            <p class="text-muted">
+                                {{ $initialStep > 1 ? 'Please complete the remaining steps' : 'Start hiring the best talent today' }}
+                            </p>
                         </div>
 
                         <!-- Progress Steps -->
@@ -45,10 +47,6 @@
                                 <div class="step-item" data-step="2">
                                     <div class="step-circle">2</div>
                                     <span class="step-label">Company</span>
-                                </div>
-                                <div class="step-item" data-step="3">
-                                    <div class="step-circle">3</div>
-                                    <span class="step-label">Verify</span>
                                 </div>
                             </div>
                         </div>
@@ -85,8 +83,21 @@
 
                                     <div class="form-group mb-0">
                                         <label class="form-label">Phone Number<span class="text-danger">*</span></label>
-                                        <input type="tel" id="phone" name="phone" class="form-control"
-                                            placeholder="+1 (555) 000-0000" required>
+                                        <div class="input-group">
+                                            <select class="form-select" id="country_code" name="country_code"
+                                                style="max-width: 100px; background-color: #f8f9fa;">
+                                                <option value="+91">🇮🇳 +91</option>
+                                                <option value="+1">🇺🇸 +1</option>
+                                                <option value="+44">🇬🇧 +44</option>
+                                                <option value="+61">🇦🇺 +61</option>
+                                                <option value="+81">🇯🇵 +81</option>
+                                                <option value="+49">🇩🇪 +49</option>
+                                                <option value="+33">🇫🇷 +33</option>
+                                                <option value="+86">🇨🇳 +86</option>
+                                            </select>
+                                            <input type="tel" id="phone" name="phone" class="form-control"
+                                                placeholder="0000000000" required pattern="[0-9]{10}">
+                                        </div>
                                         <small class="form-text text-muted">For SMS OTP verification</small>
                                         <div class="error-message text-danger small mt-1"></div>
                                     </div>
@@ -224,67 +235,6 @@
                             </div>
 
                             <!-- Step 3: Verification Method -->
-                            <div class="form-step" id="step3">
-                                <h5 class="mb-4">Choose Verification Method</h5>
-                                <div class="form-float d-flex flex-column gap-3">
-
-                                    <p class="text-muted mb-3">Select how you want to verify your account</p>
-
-                                    <div class="row g-3">
-                                        <div class="col-md-6">
-                                            <input type="radio" class="btn-check" name="verification_method"
-                                                id="verify_email" value="email">
-                                            <label class="verification-option" for="verify_email">
-                                                <div class="d-flex align-items-center gap-3">
-                                                    <div class="icon-wrapper">
-                                                        <i class="bi bi-envelope-fill"></i>
-                                                    </div>
-                                                    <div>
-                                                        <h6 class="mb-0">Email Verification</h6>
-                                                        <small class="text-muted">Verify via email OTP</small>
-                                                    </div>
-                                                </div>
-                                            </label>
-                                        </div>
-
-                                        <div class="col-md-6">
-                                            <input type="radio" class="btn-check" name="verification_method"
-                                                id="verify_phone" value="phone">
-                                            <label class="verification-option" for="verify_phone">
-                                                <div class="d-flex align-items-center gap-3">
-                                                    <div class="icon-wrapper">
-                                                        <i class="bi bi-phone-fill"></i>
-                                                    </div>
-                                                    <div>
-                                                        <h6 class="mb-0">SMS Verification</h6>
-                                                        <small class="text-muted">Verify via phone OTP</small>
-                                                    </div>
-                                                </div>
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group mb-0 mt-3">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="terms" required>
-                                            <label class="form-check-label" for="terms">
-                                                I agree to the <a href="#" class="text-primary">Terms and
-                                                    Conditions</a> & <a href="#" class="text-primary">Privacy
-                                                    Policy</a>
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group mb-0 mt-3 d-flex gap-2">
-                                        <button type="button" class="btn btn-secondary" onclick="prevStep(2)">
-                                            <i class="bi bi-arrow-left me-2"></i> Back
-                                        </button>
-                                        <button type="submit" id="submitBtn" class="btn btn-primary flex-fill">
-                                            <i class="bi bi-check-circle me-2"></i> Register & Send OTP
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
 
                         </form>
 
@@ -553,7 +503,14 @@
 @endpush
 
 @push('scripts')
-    <script src="{{ asset('company-assets/register.js') }}"></script>
+    <script>
+        // Set these BEFORE loading register.js so they're available immediately
+        window.initialStep = {{ $initialStep ?? 1 }};
+        window.userId = {{ $userId ?? 'null' }};
+        console.log('Initial Step from Backend:', window.initialStep);
+        console.log('User ID from Backend:', window.userId);
+    </script>
+    <script src="{{ asset('company-assets/register.js') }}?v={{ time() }}"></script>
     <script>
         $(document).ready(function() {
             // Country Change
