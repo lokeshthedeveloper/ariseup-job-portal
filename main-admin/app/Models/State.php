@@ -93,6 +93,11 @@ class State extends Model
     /**
      * Get the cities for the state.
      */
+    public function districts()
+    {
+        return $this->hasMany(District::class);
+    }
+
     public function cities()
     {
         return $this->hasMany(City::class);

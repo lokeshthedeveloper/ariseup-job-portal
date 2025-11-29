@@ -39,16 +39,37 @@ Route::post('/contact', [ContactController::class, 'submit'])->name('contact.sub
 
 use App\Http\Controllers\Frontend\CompanyController as FrontendCompanyController;
 
+// Company Registration OTP Verification Route
+Route::get('/company-registration/verify-otp', [FrontendCompanyController::class, 'showVerifyOtp'])->name('company.verify-otp');
+
 // Company Authentication Routes
 Route::prefix('company')->name('company.')->group(function () {
-    Route::get('/login', [FrontendCompanyController::class, 'login'])->name('login');
-    Route::post('/login', [FrontendCompanyController::class, 'loginSubmit'])->name('login.submit');
-    Route::get('/register', [FrontendCompanyController::class, 'register'])->name('register');
-    Route::get('/forgot-password', [FrontendCompanyController::class, 'forgotPassword'])->name('forgot-password');
-    Route::post('/forgot-password', [FrontendCompanyController::class, 'forgotPasswordSubmit'])->name('forgot-password.submit');
-    Route::get('/reset-password/{token}', [FrontendCompanyController::class, 'resetPassword'])->name('reset-password');
-    Route::post('/reset-password', [FrontendCompanyController::class, 'resetPasswordSubmit'])->name('reset-password.submit');
-    Route::get('/dashboard', [FrontendCompanyController::class, 'dashboard'])->name('dashboard');
+    // Guest routes (not authenticated)
+    Route::middleware('guest')->group(function () {
+        Route::get('/login', [FrontendCompanyController::class, 'login'])->name('login');
+        Route::post('/login', [FrontendCompanyController::class, 'loginSubmit'])->name('login.submit');
+        Route::get('/register', [FrontendCompanyController::class, 'register'])->name('register');
+        Route::post('/register', [FrontendCompanyController::class, 'registerSubmit'])->name('register.submit');
+        Route::get('/forgot-password', [FrontendCompanyController::class, 'forgotPassword'])->name('forgot-password');
+        Route::post('/forgot-password', [FrontendCompanyController::class, 'forgotPasswordSubmit'])->name('forgot-password.submit');
+        Route::get('/reset-password/{token}', [FrontendCompanyController::class, 'resetPassword'])->name('reset-password');
+        Route::post('/reset-password', [FrontendCompanyController::class, 'resetPasswordSubmit'])->name('reset-password.submit');
+    });
+
+    // Location AJAX Routes (accessible to all)
+    Route::get('/get-states/{country_id}', [FrontendCompanyController::class, 'getStates'])->name('get-states');
+    Route::get('/get-districts/{state_id}', [FrontendCompanyController::class, 'getDistricts'])->name('get-districts');
+    Route::get('/get-cities/{district_id}', [FrontendCompanyController::class, 'getCities'])->name('get-cities');
+
+    // Protected routes (require authentication)
+    Route::middleware('auth')->group(function () {
+        Route::get('/dashboard', [FrontendCompanyController::class, 'dashboard'])->name('dashboard');
+        Route::get('/profile', [FrontendCompanyController::class, 'profile'])->name('profile');
+        Route::put('/profile', [FrontendCompanyController::class, 'updateProfile'])->name('profile.update');
+        Route::get('/theme-settings', [FrontendCompanyController::class, 'themeSettings'])->name('theme-settings');
+        Route::post('/theme-settings', [FrontendCompanyController::class, 'updateThemeSettings'])->name('theme-settings.update');
+        Route::post('/logout', [FrontendCompanyController::class, 'logout'])->name('logout');
+    });
 });
 
 // Admin Authentication Routes
@@ -144,5 +165,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('cities', CityController::class);
         Route::patch('cities/{city}/toggle-status', [CityController::class, 'toggleStatus'])
             ->name('cities.toggle-status');
+
+        // Theme management routes
+        Route::resource('themes', \App\Http\Controllers\Admin\ThemeController::class);
     });
 });

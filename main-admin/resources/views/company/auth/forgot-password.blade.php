@@ -51,17 +51,17 @@
 @push('styles')
     <style>
         .page-title {
-            background: linear-gradient(rgba(63, 187, 192, 0.8), rgba(63, 187, 192, 0.8)), url('https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center center;
+            background: linear-gradient(rgba(13, 110, 253, 0.85), rgba(10, 88, 202, 0.85)), url('https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center center;
             background-size: cover;
-            padding: 60px 0;
+            padding: 26px 0;
             margin-bottom: 60px;
         }
 
         .page-title h1 {
             color: #fff;
-            font-size: 48px;
+            font-size: 32px;
             font-weight: 700;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .breadcrumbs {

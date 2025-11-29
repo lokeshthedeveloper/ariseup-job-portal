@@ -95,6 +95,11 @@ class City extends Model
     /**
      * Get the state that owns the city.
      */
+    public function district()
+    {
+        return $this->belongsTo(District::class);
+    }
+
     public function state()
     {
         return $this->belongsTo(State::class);

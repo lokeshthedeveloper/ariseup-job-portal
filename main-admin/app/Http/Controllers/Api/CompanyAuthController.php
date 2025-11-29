@@ -80,7 +80,10 @@ class CompanyAuthController extends Controller
             'description' => 'nullable|string',
             'industry' => 'nullable|string',
             'company_size' => 'nullable|string',
-            'location' => 'nullable|string',
+            'country' => 'required|exists:countries,id',
+            'state' => 'required|exists:states,id',
+            'district' => 'required|exists:districts,id',
+            'city' => 'required|exists:cities,id',
             'website' => 'nullable|string',
             'social_media_links' => 'nullable|json',
             'job_categories' => 'nullable|json',
@@ -115,6 +118,12 @@ class CompanyAuthController extends Controller
                 ], 400);
             }
 
+            // Get Location Names
+            $countryName = \App\Models\Country::find($request->country)->name;
+            $stateName = \App\Models\State::find($request->state)->name;
+            $districtName = \App\Models\District::find($request->district)->name;
+            $cityName = \App\Models\City::find($request->city)->name;
+
             // Create company
             $company = Company::create([
                 'user_id' => $user->id,
@@ -125,7 +134,11 @@ class CompanyAuthController extends Controller
                 'description' => $request->description,
                 'industry' => $request->industry,
                 'company_size' => $request->company_size,
-                'location' => $request->location,
+                'country' => $countryName,
+                'state' => $stateName,
+                'district' => $districtName,
+                'city' => $cityName,
+                'address' => "$cityName, $stateName, $countryName",
                 'website' => $request->website,
                 'social_media_links' => $request->social_media_links,
                 'job_categories' => $request->job_categories,

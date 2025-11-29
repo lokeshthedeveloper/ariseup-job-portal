@@ -24,16 +24,20 @@ async function nextStep(step) {
     }
 
     // Hide current step
-    document.getElementById(`step${currentStep}`).classList.remove('active');
-    document.querySelector(`.steps-progress .step-item:nth-child(${currentStep})`).classList.remove('active');
+    document.getElementById(`step${currentStep}`).classList.remove("active");
+    document
+        .querySelector(`.steps-progress .step-item:nth-child(${currentStep})`)
+        .classList.remove("active");
 
     // Show next step
     currentStep = step;
-    document.getElementById(`step${step}`).classList.add('active');
-    document.querySelector(`.steps-progress .step-item:nth-child(${step})`).classList.add('active');
+    document.getElementById(`step${step}`).classList.add("active");
+    document
+        .querySelector(`.steps-progress .step-item:nth-child(${step})`)
+        .classList.add("active");
 
     // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function prevStep(step) {
@@ -41,16 +45,20 @@ function prevStep(step) {
     saveStepData(currentStep);
 
     // Hide current step
-    document.getElementById(`step${currentStep}`).classList.remove('active');
-    document.querySelector(`.steps-progress .step-item:nth-child(${currentStep})`).classList.remove('active');
+    document.getElementById(`step${currentStep}`).classList.remove("active");
+    document
+        .querySelector(`.steps-progress .step-item:nth-child(${currentStep})`)
+        .classList.remove("active");
 
     // Show previous step
     currentStep = step;
-    document.getElementById(`step${step}`).classList.add('active');
-    document.querySelector(`.steps-progress .step-item:nth-child(${step})`).classList.add('active');
+    document.getElementById(`step${step}`).classList.add("active");
+    document
+        .querySelector(`.steps-progress .step-item:nth-child(${step})`)
+        .classList.add("active");
 
     // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 // Save step data to formData object
@@ -220,25 +228,25 @@ function socialLogin(provider) {
 
 // Register Step 1: User Details
 async function registerStep1() {
-    const btn = document.querySelector('#step1 button');
+    const btn = document.querySelector("#step1 button");
     const originalText = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = 'Processing...';
+    btn.innerHTML = "Processing...";
 
     try {
         const response = await fetch(`${API_BASE_URL}/register-step1`, {
-            method: 'POST',
+            method: "POST",
             headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
+                "Content-Type": "application/json",
+                Accept: "application/json",
             },
             body: JSON.stringify({
                 name: formData.name,
                 email: formData.email,
                 password: formData.password,
                 password_confirmation: formData.password_confirmation,
-                phone: formData.phone
-            })
+                phone: formData.phone,
+            }),
         });
 
         const data = await response.json();
@@ -251,22 +259,22 @@ async function registerStep1() {
         } else {
             // Handle errors
             if (data.errors) {
-                Object.keys(data.errors).forEach(key => {
+                Object.keys(data.errors).forEach((key) => {
                     const input = document.querySelector(`[name="${key}"]`);
                     if (input) {
                         showError(input, data.errors[key][0]);
                     }
                 });
             } else {
-                showAlert(data.message || 'Registration failed', 'error');
+                showAlert(data.message || "Registration failed", "error");
             }
             btn.disabled = false;
             btn.innerHTML = originalText;
             return false;
         }
     } catch (error) {
-        console.error('Step 1 Error:', error);
-        showAlert('An error occurred. Please try again.', 'error');
+        console.error("Step 1 Error:", error);
+        showAlert("An error occurred. Please try again.", "error");
         btn.disabled = false;
         btn.innerHTML = originalText;
         return false;
@@ -274,8 +282,10 @@ async function registerStep1() {
 }
 
 // Form submission (Step 2 + Verification Method)
-document.getElementById('registrationForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
+document
+    .getElementById("registrationForm")
+    .addEventListener("submit", async function (e) {
+        e.preventDefault();
 
         // Validate final step
         if (!validateStep(currentStep)) {
@@ -314,26 +324,29 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
             console.log("Submitting registration data:", registrationData);
 
             // Make API request to register-step2
-        const response = await fetch(`${API_BASE_URL}/register-step2`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({
-                user_id: formData.user_id,
-                company_name: formData.company_name,
-                company_type: formData.company_type,
-                verification_method: formData.verification_method,
-                // Additional company fields
-                industry: formData.industry,
-                company_size: formData.company_size,
-                location: formData.location,
-                website: formData.website,
-                description: formData.description,
-                about_us: formData.about_us
-            })
-        });
+            const response = await fetch(`${API_BASE_URL}/register-step2`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                },
+                body: JSON.stringify({
+                    user_id: formData.user_id,
+                    company_name: formData.company_name,
+                    company_type: formData.company_type,
+                    verification_method: formData.verification_method,
+                    // Additional company fields
+                    industry: formData.industry,
+                    company_size: formData.company_size,
+                    country: formData.country,
+                    state: formData.state,
+                    district: formData.district,
+                    city: formData.city,
+                    website: formData.website,
+                    description: formData.description,
+                    about_us: formData.about_us,
+                }),
+            });
 
             const data = await response.json();
 

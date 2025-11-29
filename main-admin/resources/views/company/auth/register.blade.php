@@ -157,11 +157,45 @@
                                         <div class="error-message text-danger small mt-1"></div>
                                     </div>
 
-                                    <div class="form-group mb-0">
-                                        <label class="form-label">Location<span class="text-danger">*</span></label>
-                                        <input type="text" id="location" name="location" class="form-control"
-                                            placeholder="City, Country" required>
-                                        <div class="error-message text-danger small mt-1"></div>
+                                    <div class="row">
+                                        <div class="col-md-6 form-group mb-0">
+                                            <label class="form-label">Country<span class="text-danger">*</span></label>
+                                            <select id="country" name="country" class="form-control form-select"
+                                                required>
+                                                <option value="">Select Country</option>
+                                                @foreach ($countries as $country)
+                                                    <option value="{{ $country->id }}">{{ $country->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            <div class="error-message text-danger small mt-1"></div>
+                                        </div>
+                                        <div class="col-md-6 form-group mb-0">
+                                            <label class="form-label">State<span class="text-danger">*</span></label>
+                                            <select id="state" name="state" class="form-control form-select"
+                                                required>
+                                                <option value="">Select State</option>
+                                            </select>
+                                            <div class="error-message text-danger small mt-1"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mt-3">
+                                        <div class="col-md-6 form-group mb-0">
+                                            <label class="form-label">District<span class="text-danger">*</span></label>
+                                            <select id="district" name="district" class="form-control form-select"
+                                                required>
+                                                <option value="">Select District</option>
+                                            </select>
+                                            <div class="error-message text-danger small mt-1"></div>
+                                        </div>
+                                        <div class="col-md-6 form-group mb-0">
+                                            <label class="form-label">City<span class="text-danger">*</span></label>
+                                            <select id="city" name="city" class="form-control form-select"
+                                                required>
+                                                <option value="">Select City</option>
+                                            </select>
+                                            <div class="error-message text-danger small mt-1"></div>
+                                        </div>
                                     </div>
 
                                     <div class="form-group mb-0">
@@ -274,17 +308,17 @@
     <style>
         /* Page Title Styles */
         .page-title {
-            background: linear-gradient(rgba(63, 187, 192, 0.8), rgba(63, 187, 192, 0.8)), url('https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center center;
+            background: linear-gradient(rgba(13, 110, 253, 0.85), rgba(10, 88, 202, 0.85)), url('https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center center;
             background-size: cover;
-            padding: 60px 0;
+            padding: 26px 0;
             margin-bottom: 60px;
         }
 
         .page-title h1 {
             color: #fff;
-            font-size: 48px;
+            font-size: 32px;
             font-weight: 700;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .breadcrumbs {
@@ -520,4 +554,91 @@
 
 @push('scripts')
     <script src="{{ asset('company-assets/register.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            // Country Change
+            $('#country').change(function() {
+                var countryId = $(this).val();
+                if (countryId) {
+                    $.ajax({
+                        url: "{{ route('company.get-states', ':id') }}".replace(':id', countryId),
+                        type: "GET",
+                        dataType: "json",
+                        success: function(data) {
+                            $('#state').empty().append(
+                                '<option value="">Select State</option>');
+                            $.each(data, function(key, value) {
+                                $('#state').append('<option value="' + value.id + '">' +
+                                    value.name + '</option>');
+                            });
+                            $('#state').prop('disabled', false);
+                            $('#district').empty().append(
+                                '<option value="">Select District</option>').prop(
+                                'disabled', true);
+                            $('#city').empty().append('<option value="">Select City</option>')
+                                .prop('disabled', true);
+                        }
+                    });
+                } else {
+                    $('#state').empty().append('<option value="">Select State</option>').prop('disabled',
+                        true);
+                    $('#district').empty().append('<option value="">Select District</option>').prop(
+                        'disabled', true);
+                    $('#city').empty().append('<option value="">Select City</option>').prop('disabled',
+                        true);
+                }
+            });
+
+            // State Change
+            $('#state').change(function() {
+                var stateId = $(this).val();
+                if (stateId) {
+                    $.ajax({
+                        url: "{{ route('company.get-districts', ':id') }}".replace(':id', stateId),
+                        type: "GET",
+                        dataType: "json",
+                        success: function(data) {
+                            $('#district').empty().append(
+                                '<option value="">Select District</option>');
+                            $.each(data, function(key, value) {
+                                $('#district').append('<option value="' + value.id +
+                                    '">' + value.name + '</option>');
+                            });
+                            $('#district').prop('disabled', false);
+                            $('#city').empty().append('<option value="">Select City</option>')
+                                .prop('disabled', true);
+                        }
+                    });
+                } else {
+                    $('#district').empty().append('<option value="">Select District</option>').prop(
+                        'disabled', true);
+                    $('#city').empty().append('<option value="">Select City</option>').prop('disabled',
+                        true);
+                }
+            });
+
+            // District Change
+            $('#district').change(function() {
+                var districtId = $(this).val();
+                if (districtId) {
+                    $.ajax({
+                        url: "{{ route('company.get-cities', ':id') }}".replace(':id', districtId),
+                        type: "GET",
+                        dataType: "json",
+                        success: function(data) {
+                            $('#city').empty().append('<option value="">Select City</option>');
+                            $.each(data, function(key, value) {
+                                $('#city').append('<option value="' + value.id + '">' +
+                                    value.name + '</option>');
+                            });
+                            $('#city').prop('disabled', false);
+                        }
+                    });
+                } else {
+                    $('#city').empty().append('<option value="">Select City</option>').prop('disabled',
+                        true);
+                }
+            });
+        });
+    </script>
 @endpush

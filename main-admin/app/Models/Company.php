@@ -22,7 +22,7 @@ class Company extends Model
         'industry',
         'company_size',
         'location',
-        'website',  
+        'website',
         'social_media_links',
         'job_categories',
         'about_us',
@@ -37,6 +37,12 @@ class Company extends Model
         'application_process',
         'legal_information',
         'is_active',
+        'address',
+        'city',
+        'district',
+        'state',
+        'country',
+        'company_email',
     ];
 
     protected $casts = [
