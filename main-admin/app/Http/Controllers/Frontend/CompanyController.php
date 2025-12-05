@@ -10,8 +10,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use App\Models\User;
 use App\Models\Company;
-use App\Models\CompanyTheme;
-use App\Models\Theme;
+
 
 class CompanyController extends Controller
 {
@@ -385,73 +384,5 @@ class CompanyController extends Controller
         $company->save();
 
         return redirect()->route('company.profile')->with('success', 'Profile updated successfully.');
-    }
-
-    /**
-     * Show the theme settings page.
-     */
-    public function themeSettings()
-    {
-        $user = \Auth::user();
-
-        // Check if user has completed registration
-        if (!$user->company) {
-            return redirect()->route('company.register', ['step' => 2])
-                ->with('error', 'Please complete your company details first.');
-        }
-
-        if (!$user->company->email_verified && !$user->company->phone_verified_at) {
-            return redirect()->route('company.verify-otp')
-                ->with('error', 'Please verify your account first.');
-        }
-
-        $company = $user->company;
-
-        if (!$company) {
-            return redirect()->route('company.dashboard')->with('error', 'Company profile not found.');
-        }
-
-        // Get all active themes grouped by section type
-        $themes = \App\Models\Theme::where('is_active', true)->get()->groupBy('section_type');
-
-        // Get current company themes
-        $currentThemes = \App\Models\CompanyTheme::where('company_id', $company->id)
-            ->pluck('theme_id', 'section_type')
-            ->toArray();
-
-        return view('company.theme-settings', compact('themes', 'currentThemes'));
-    }
-
-    /**
-     * Update the theme settings.
-     */
-    public function updateThemeSettings(Request $request)
-    {
-        $user = \Auth::user();
-        $company = $user->company;
-
-        if (!$company) {
-            return redirect()->route('company.dashboard')->with('error', 'Company profile not found.');
-        }
-
-        $data = $request->except('_token');
-
-        foreach ($data as $sectionType => $themeId) {
-            // Validate theme exists and matches section type
-            $theme = \App\Models\Theme::find($themeId);
-            if ($theme && $theme->section_type === str_replace('_', ' ', $sectionType)) {
-                \App\Models\CompanyTheme::updateOrCreate(
-                    [
-                        'company_id' => $company->id,
-                        'section_type' => $theme->section_type,
-                    ],
-                    [
-                        'theme_id' => $themeId,
-                    ]
-                );
-            }
-        }
-
-        return redirect()->route('company.theme-settings')->with('success', 'Theme settings updated successfully.');
     }
 }

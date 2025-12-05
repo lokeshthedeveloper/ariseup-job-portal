@@ -75,8 +75,7 @@ Route::prefix('company')->name('company.')->group(function () {
         Route::get('/dashboard', [FrontendCompanyController::class, 'dashboard'])->name('dashboard');
         Route::get('/profile', [FrontendCompanyController::class, 'profile'])->name('profile');
         Route::put('/profile', [FrontendCompanyController::class, 'updateProfile'])->name('profile.update');
-        Route::get('/theme-settings', [FrontendCompanyController::class, 'themeSettings'])->name('theme-settings');
-        Route::post('/theme-settings', [FrontendCompanyController::class, 'updateThemeSettings'])->name('theme-settings.update');
+
         Route::post('/logout', [FrontendCompanyController::class, 'logout'])->name('logout');
     });
 });
@@ -174,8 +173,5 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('cities', CityController::class);
         Route::patch('cities/{city}/toggle-status', [CityController::class, 'toggleStatus'])
             ->name('cities.toggle-status');
-
-        // Theme management routes
-        Route::resource('themes', \App\Http\Controllers\Admin\ThemeController::class);
     });
 });

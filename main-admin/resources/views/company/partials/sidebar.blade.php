@@ -60,10 +60,7 @@
                 <li>
                     <a href="#"><i class="fa-solid fa-comments me-2"></i>Messages</a>
                 </li>
-                <li class="{{ request()->routeIs('company.theme-settings') ? 'active' : '' }}">
-                    <a href="{{ route('company.theme-settings') }}"><i class="fa-solid fa-gear me-2"></i>Theme
-                        Settings</a>
-                </li>
+
                 <li>
                     <a href="#"><i class="fa-solid fa-unlock-keyhole me-2"></i>Change Password</a>
                 </li>
