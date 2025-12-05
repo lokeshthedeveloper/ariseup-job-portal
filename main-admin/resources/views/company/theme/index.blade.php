@@ -13,13 +13,35 @@
                         <p class="mb-0 small mt-1">Select a theme and customize with components of your choice</p>
                     </div>
                     <div class="card-body p-0">
-                        <!-- Debug Info (remove in production) -->
-                        @if (config('app.debug'))
-                            <div class="alert alert-info m-3">
-                                <strong>Debug Info:</strong><br>
-                                Selected Theme ID: {{ $selectedTheme ?? 'None' }}<br>
-                                Selected Components: @json($selectedComponents)<br>
-                                Total Components: {{ count($selectedComponents) }}
+                        <!-- Success/Error Messages -->
+                        @if (session('success'))
+                            <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
+                                <i class="fa-solid fa-check-circle me-2"></i>
+                                {{ session('success') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                    aria-label="Close"></button>
+                            </div>
+                        @endif
+
+                        @if (session('error'))
+                            <div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
+                                <i class="fa-solid fa-exclamation-circle me-2"></i>
+                                {{ session('error') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                    aria-label="Close"></button>
+                            </div>
+                        @endif
+
+                        @if ($errors->any())
+                            <div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
+                                <i class="fa-solid fa-exclamation-triangle me-2"></i>
+                                <ul class="mb-0">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                    aria-label="Close"></button>
                             </div>
                         @endif
 
