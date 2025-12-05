@@ -123,6 +123,7 @@ class CompanyController extends Controller
             'company_video' => 'nullable|url|max:255',
             'application_process' => 'nullable|string',
             'legal_information' => 'nullable|string',
+            'password' => 'nullable|string|min:8|confirmed',
         ]);
 
         // Handle checkbox - checkboxes don't send value when unchecked
@@ -142,7 +143,17 @@ class CompanyController extends Controller
         $validated['job_categories'] = $request->input('job_categories', []);
         $validated['contact_info'] = $request->input('contact_info', []);
 
+        // Remove password from company data
+        unset($validated['password']);
+
         $company->update($validated);
+
+        // Update associated user's password if provided
+        if ($request->filled('password')) {
+            $company->user->update([
+                'password' => bcrypt($request->password)
+            ]);
+        }
 
         return redirect()->route('admin.companies.index')->with('success', 'Company updated successfully.');
     }

@@ -42,8 +42,7 @@
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="companyDropdown">
                             <li><a class="dropdown-item" href="{{ route('company.dashboard') }}"><i
                                         class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
-                            <li><a class="dropdown-item" href="{{ route('company.theme-settings') }}"><i
-                                        class="bi bi-gear me-2"></i>Settings</a></li>
+
                             <li>
                                 <hr class="dropdown-divider">
                             </li>
