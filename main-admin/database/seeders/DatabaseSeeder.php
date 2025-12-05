@@ -18,6 +18,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             AdminUserSeeder::class,
             CompanySeeder::class,
+            ThemeSeeder::class,
+            ComponentSeeder::class,
+            ThemeComponentSeeder::class,
         ]);
     }
 }

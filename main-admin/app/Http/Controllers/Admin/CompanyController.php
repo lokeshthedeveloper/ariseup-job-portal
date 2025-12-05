@@ -64,8 +64,10 @@ class CompanyController extends Controller
             'company_video' => 'nullable|url|max:255',
             'application_process' => 'nullable|string',
             'legal_information' => 'nullable|string',
-            'is_active' => 'nullable|boolean',
         ]);
+
+        // Handle checkbox - checkboxes don't send value when unchecked
+        $validated['is_active'] = $request->has('is_active');
 
         // Handle logo upload
         if ($request->hasFile('logo')) {
@@ -121,8 +123,10 @@ class CompanyController extends Controller
             'company_video' => 'nullable|url|max:255',
             'application_process' => 'nullable|string',
             'legal_information' => 'nullable|string',
-            'is_active' => 'nullable|boolean',
         ]);
+
+        // Handle checkbox - checkboxes don't send value when unchecked
+        $validated['is_active'] = $request->has('is_active');
 
         // Handle logo upload
         if ($request->hasFile('logo')) {

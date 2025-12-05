@@ -173,5 +173,23 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('cities', CityController::class);
         Route::patch('cities/{city}/toggle-status', [CityController::class, 'toggleStatus'])
             ->name('cities.toggle-status');
+
+        // Theme Management Routes
+        Route::resource('themes', \App\Http\Controllers\Admin\Theme\ThemeController::class);
+        Route::patch('themes/{theme}/toggle-status', [\App\Http\Controllers\Admin\Theme\ThemeController::class, 'toggleStatus'])
+            ->name('themes.toggle-status');
+
+        // Component Management Routes
+        Route::resource('components', \App\Http\Controllers\Admin\Theme\ComponentController::class);
+        Route::patch('components/{component}/toggle-status', [\App\Http\Controllers\Admin\Theme\ComponentController::class, 'toggleStatus'])
+            ->name('components.toggle-status');
+
+        // Theme-Component Management Routes
+        Route::get('theme-components', [\App\Http\Controllers\Admin\Theme\ThemeComponentController::class, 'index'])
+            ->name('theme-components.index');
+        Route::get('theme-components/{theme}/edit', [\App\Http\Controllers\Admin\Theme\ThemeComponentController::class, 'edit'])
+            ->name('theme-components.edit');
+        Route::put('theme-components/{theme}', [\App\Http\Controllers\Admin\Theme\ThemeComponentController::class, 'update'])
+            ->name('theme-components.update');
     });
 });
