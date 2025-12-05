@@ -37,48 +37,9 @@ Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactController::class, 'submit'])->name('contact.submit');
 
-use App\Http\Controllers\Frontend\CompanyController as FrontendCompanyController;
+// Company Routes (loaded from routes/company.php)
+require __DIR__ . '/company.php';
 
-// Company Registration OTP Verification Route
-Route::get('/company-registration/verify-otp', [FrontendCompanyController::class, 'showVerifyOtp'])->name('company.verify-otp');
-
-// Company Authentication Routes
-Route::prefix('company')->name('company.')->group(function () {
-    // Guest routes (not authenticated)
-    Route::middleware('guest')->group(function () {
-        Route::get('/login', [FrontendCompanyController::class, 'login'])->name('login');
-        Route::post('/login', [FrontendCompanyController::class, 'loginSubmit'])->name('login.submit');
-        Route::get('/forgot-password', [FrontendCompanyController::class, 'forgotPassword'])->name('forgot-password');
-        Route::post('/forgot-password', [FrontendCompanyController::class, 'forgotPasswordSubmit'])->name('forgot-password.submit');
-        Route::get('/reset-password/{token}', [FrontendCompanyController::class, 'resetPassword'])->name('reset-password');
-        Route::post('/reset-password', [FrontendCompanyController::class, 'resetPasswordSubmit'])->name('reset-password.submit');
-    });
-
-    // Registration Routes (Accessible to Guest and Auth)
-    Route::get('/register', [FrontendCompanyController::class, 'register'])->name('register');
-    Route::post('/register', [FrontendCompanyController::class, 'registerSubmit'])->name('register.submit');
-
-    // API-style routes moved to Web for Session Auth
-    Route::post('/register-step1', [\App\Http\Controllers\Api\CompanyAuthController::class, 'registerStep1'])->name('register.step1');
-    Route::post('/register-step2', [\App\Http\Controllers\Api\CompanyAuthController::class, 'registerStep2'])->name('register.step2');
-    Route::post('/verify-otp', [\App\Http\Controllers\Api\CompanyAuthController::class, 'verifyOtp'])->name('verify.otp.submit');
-    Route::post('/verify-both-otps', [\App\Http\Controllers\Api\CompanyAuthController::class, 'verifyBothOtps'])->name('verify.both.otps');
-    Route::post('/resend-otp', [\App\Http\Controllers\Api\CompanyAuthController::class, 'resendOtp'])->name('resend.otp');
-
-    // Location AJAX Routes (accessible to all)
-    Route::get('/get-states/{country_id}', [FrontendCompanyController::class, 'getStates'])->name('get-states');
-    Route::get('/get-districts/{state_id}', [FrontendCompanyController::class, 'getDistricts'])->name('get-districts');
-    Route::get('/get-cities/{district_id}', [FrontendCompanyController::class, 'getCities'])->name('get-cities');
-
-    // Protected routes (require authentication and verification)
-    Route::middleware(['auth', 'company.verified'])->group(function () {
-        Route::get('/dashboard', [FrontendCompanyController::class, 'dashboard'])->name('dashboard');
-        Route::get('/profile', [FrontendCompanyController::class, 'profile'])->name('profile');
-        Route::put('/profile', [FrontendCompanyController::class, 'updateProfile'])->name('profile.update');
-
-        Route::post('/logout', [FrontendCompanyController::class, 'logout'])->name('logout');
-    });
-});
 
 // Admin Authentication Routes
 Route::prefix('admin')->name('admin.')->group(function () {

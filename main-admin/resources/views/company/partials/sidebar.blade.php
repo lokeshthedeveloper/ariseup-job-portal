@@ -39,6 +39,9 @@
                 <li class="{{ request()->routeIs('company.dashboard') ? 'active' : '' }}">
                     <a href="{{ route('company.dashboard') }}"><i class="fa-solid fa-gauge-high me-2"></i>Dashboard</a>
                 </li>
+                <li class="{{ request()->routeIs('company.theme.*') ? 'active' : '' }}">
+                    <a href="{{ route('company.theme.index') }}"><i class="fa-solid fa-palette me-2"></i>Theme</a>
+                </li>
                 <li class="{{ request()->routeIs('company.profile') ? 'active' : '' }}">
                     <a href="{{ route('company.profile') }}"><i class="fa-regular fa-user me-2"></i>Company Profile</a>
                 </li>
