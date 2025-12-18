@@ -38,7 +38,8 @@ class CompanyThemeController extends Controller
 
         $selectedComponents = DB::table('company_selected_components')
             ->where('company_id', $company->id)
-            ->pluck('component_id')
+            ->get(['component_id', 'theme_id'])
+            ->pluck('theme_id', 'component_id')
             ->toArray();
 
         // Debug: Log what we're loading
@@ -74,7 +75,8 @@ class CompanyThemeController extends Controller
         $validated = $request->validate([
             'theme_id' => 'required|exists:themes,id',
             'components' => 'nullable|array',
-            'components.*' => 'exists:components,id',
+            'components.*.component_id' => 'required|exists:components,id',
+            'components.*.theme_id' => 'required|exists:themes,id',
         ]);
 
         // Verify selected theme is active
@@ -107,19 +109,36 @@ class CompanyThemeController extends Controller
 
             if (!empty($validated['components'])) {
                 $componentData = [];
-                foreach ($validated['components'] as $componentId) {
+                foreach ($validated['components'] as $componentSelection) {
+                    $componentId = $componentSelection['component_id'];
+                    $themeId = $componentSelection['theme_id'];
+
                     // Verify component exists and is active
                     $component = Component::where('id', $componentId)
                         ->where('status', true)
                         ->first();
 
-                    if ($component) {
-                        $componentData[] = [
-                            'company_id' => $company->id,
-                            'component_id' => $componentId,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ];
+                    // Verify theme exists and is active
+                    $componentTheme = Theme::where('id', $themeId)
+                        ->where('status', true)
+                        ->first();
+
+                    if ($component && $componentTheme) {
+                        // Verify the component belongs to the selected theme
+                        $themeComponent = DB::table('theme_components')
+                            ->where('theme_id', $themeId)
+                            ->where('component_id', $componentId)
+                            ->exists();
+
+                        if ($themeComponent) {
+                            $componentData[] = [
+                                'company_id' => $company->id,
+                                'component_id' => $componentId,
+                                'theme_id' => $themeId,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ];
+                        }
                     }
                 }
 

@@ -11,17 +11,20 @@ services:
       - /app/node_modules
       - /app/.nuxt
     ports:
-      - "8001:3000"
+      - "80:3000"
     environment:
       - NODE_ENV=development
       - HOST=0.0.0.0
       - PORT=3000
-      - API_URL=http://app:80
+      - API_URL=http://localhost:8000
       - DB_HOST=db
       - DB_PORT=3306
       - DB_DATABASE=job-portal
       - DB_USERNAME=root
       - DB_PASSWORD=root
+    extra_hosts:
+      - "abc.local:host-gateway"
+      - "xyz.local:host-gateway"
     depends_on:
       - db
       - redis

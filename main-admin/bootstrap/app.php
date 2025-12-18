@@ -17,6 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'company.verified' => \App\Http\Middleware\EnsureCompanyVerified::class,
         ]);
 
+        // Ensure CORS middleware is active and runs first
+        $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
+
         // Exclude API-style routes from CSRF verification
         $middleware->validateCsrfTokens(except: [
             'company/register-step1',

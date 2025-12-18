@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\CompanyAuthController;
+use App\Http\Controllers\Api\ThemeConfigController;
 use App\Http\Controllers\Api\SkillCategoryController;
 use App\Http\Controllers\Api\SkillController;
 use App\Http\Controllers\Api\UniversityController;
@@ -28,6 +29,18 @@ use App\Http\Controllers\Api\CityController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+
+/*
+|--------------------------------------------------------------------------
+| Frontend Theme Configuration Routes
+|--------------------------------------------------------------------------
+| Routes for white-label multi-tenant theme configuration
+*/
+
+Route::prefix('frontend')->group(function () {
+    Route::post('/theme-config', [ThemeConfigController::class, 'getConfig']);
+    Route::post('/theme-config/clear-cache', [ThemeConfigController::class, 'clearCache']);
+});
 
 Route::prefix('company')->group(function () {
     // Public routes (no authentication required)

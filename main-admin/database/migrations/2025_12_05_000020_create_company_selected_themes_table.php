@@ -24,8 +24,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('company_id')->constrained()->onDelete('cascade');
             $table->foreignId('component_id')->constrained()->onDelete('cascade');
+            $table->foreignId('theme_id')->constrained()->onDelete('cascade');
             $table->timestamps();
 
+            // Each company can only have one instance of a component (but it can be from any theme)
             $table->unique(['company_id', 'component_id']);
         });
     }

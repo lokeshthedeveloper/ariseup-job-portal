@@ -117,8 +117,9 @@
                                             </div>
                                         </div>
                                         <p class="text-muted small mb-4">
-                                            Select components to customize your experience. Components are grouped by the
-                                            selected theme.
+                                            <i class="fa-solid fa-info-circle me-1"></i>
+                                            <strong>Tip:</strong> You can mix and match components from different themes!
+                                            Switch between themes and select the components you want from each one.
                                         </p>
 
                                         <!-- Components Container -->
@@ -138,11 +139,12 @@
                                                                                     class="form-check-input component-checkbox"
                                                                                     type="checkbox" name="components[]"
                                                                                     value="{{ $component->id }}"
-                                                                                    id="component_{{ $component->id }}"
+                                                                                    id="component_{{ $component->id }}_{{ $theme->id }}"
                                                                                     data-component-id="{{ $component->id }}"
-                                                                                    {{ in_array($component->id, $selectedComponents) ? 'checked' : '' }}>
+                                                                                    data-theme-id="{{ $theme->id }}"
+                                                                                    {{ isset($selectedComponents[$component->id]) && $selectedComponents[$component->id] == $theme->id ? 'checked' : '' }}>
                                                                                 <label class="form-check-label w-100"
-                                                                                    for="component_{{ $component->id }}">
+                                                                                    for="component_{{ $component->id }}_{{ $theme->id }}">
                                                                                     <div class="component-content">
                                                                                         <div
                                                                                             class="d-flex align-items-start">
@@ -154,8 +156,17 @@
                                                                                             <div class="flex-grow-1">
                                                                                                 <strong
                                                                                                     class="d-block">{{ $component->name }}</strong>
-                                                                                                <small
-                                                                                                    class="text-muted">{{ $component->slug }}</small>
+                                                                                                <div
+                                                                                                    class="d-flex align-items-center gap-2">
+                                                                                                    <small
+                                                                                                        class="text-muted">{{ $component->slug }}</small>
+                                                                                                    <span
+                                                                                                        class="badge bg-secondary"
+                                                                                                        style="font-size: 0.65rem;">
+                                                                                                        <i
+                                                                                                            class="fa-solid fa-palette me-1"></i>{{ $theme->name }}
+                                                                                                    </span>
+                                                                                                </div>
                                                                                             </div>
                                                                                             <div class="check-indicator">
                                                                                                 <i
@@ -382,7 +393,9 @@
             const selectedThemeCount = document.getElementById('selected-theme-count');
             const selectedComponentsCount = document.getElementById('selected-components-count');
 
+
             // Store component selections state (persists across theme switches)
+            // Key format: "componentId_themeId" to track each component-theme combination separately
             let componentSelections = new Map();
 
             // Initialize on page load - capture ALL checkboxes including hidden ones
@@ -403,7 +416,7 @@
                     const themeName = this.querySelector('h6').textContent;
                     const radio = this.querySelector('.theme-radio');
 
-                    // Save current component selections before switching (all visible checkboxes)
+                    // Save current component selections before switching
                     saveCurrentComponentSelections();
 
                     // Update radio
@@ -439,9 +452,11 @@
             // Component checkbox handler
             document.querySelectorAll('.component-checkbox').forEach(checkbox => {
                 checkbox.addEventListener('change', function() {
-                    // Update persistent state
+                    // Update persistent state using componentId_themeId as key
                     const componentId = this.dataset.componentId;
-                    componentSelections.set(componentId, this.checked);
+                    const themeId = this.dataset.themeId;
+                    const selectionKey = `${componentId}_${themeId}`;
+                    componentSelections.set(selectionKey, this.checked);
                     updateComponentCount();
                 });
             });
@@ -452,7 +467,9 @@
                     const section = this.closest('.theme-components-section');
                     section.querySelectorAll('.component-checkbox').forEach(cb => {
                         cb.checked = true;
-                        componentSelections.set(cb.dataset.componentId, true);
+                        const selectionKey =
+                            `${cb.dataset.componentId}_${cb.dataset.themeId}`;
+                        componentSelections.set(selectionKey, true);
                     });
                     updateComponentCount();
                 });
@@ -464,7 +481,9 @@
                     const section = this.closest('.theme-components-section');
                     section.querySelectorAll('.component-checkbox').forEach(cb => {
                         cb.checked = false;
-                        componentSelections.set(cb.dataset.componentId, false);
+                        const selectionKey =
+                            `${cb.dataset.componentId}_${cb.dataset.themeId}`;
+                        componentSelections.set(selectionKey, false);
                     });
                     updateComponentCount();
                 });
@@ -481,15 +500,19 @@
                 componentSections.forEach(section => {
                     section.querySelectorAll('.component-checkbox').forEach(checkbox => {
                         const componentId = parseInt(checkbox.dataset.componentId);
+                        const themeId = parseInt(checkbox.dataset.themeId);
+                        const selectionKey = `${componentId}_${themeId}`;
 
-                        // Check if this component is in the server's selected list
-                        const isSelected = serverSelectedComponents.includes(componentId);
+                        // Check if this component-theme combo is in the server's selected list
+                        // serverSelectedComponents is an object: {componentId: themeId}
+                        const isSelected = serverSelectedComponents[componentId] &&
+                            serverSelectedComponents[componentId] == themeId;
 
                         // Set checkbox state
                         checkbox.checked = isSelected;
 
-                        // Store in our Map
-                        componentSelections.set(componentId.toString(), isSelected);
+                        // Store in our Map with componentId_themeId as key
+                        componentSelections.set(selectionKey, isSelected);
                     });
                 });
 
@@ -503,7 +526,9 @@
                 visibleSections.forEach(section => {
                     section.querySelectorAll('.component-checkbox').forEach(checkbox => {
                         const componentId = checkbox.dataset.componentId;
-                        componentSelections.set(componentId, checkbox.checked);
+                        const themeId = checkbox.dataset.themeId;
+                        const selectionKey = `${componentId}_${themeId}`;
+                        componentSelections.set(selectionKey, checkbox.checked);
                     });
                 });
             }
@@ -514,9 +539,10 @@
                 if (section) {
                     section.querySelectorAll('.component-checkbox').forEach(checkbox => {
                         const componentId = checkbox.dataset.componentId;
+                        const selectionKey = `${componentId}_${themeId}`;
                         // Restore from our Map
-                        if (componentSelections.has(componentId)) {
-                            checkbox.checked = componentSelections.get(componentId);
+                        if (componentSelections.has(selectionKey)) {
+                            checkbox.checked = componentSelections.get(selectionKey);
                         }
                     });
                 }
@@ -525,11 +551,12 @@
             // Update component count based on all selections (across all themes)
             function updateComponentCount() {
                 let totalChecked = 0;
-                componentSelections.forEach((isChecked, componentId) => {
+                componentSelections.forEach((isChecked, selectionKey) => {
                     if (isChecked) totalChecked++;
                 });
                 selectedComponentsCount.textContent = totalChecked;
             }
+
 
             // Before form submit, ensure ALL checkboxes (including hidden) have correct state
             document.getElementById('themeForm').addEventListener('submit', function(e) {
@@ -537,33 +564,48 @@
                 console.log('Current selections in Map:', componentSelections);
 
                 // IMPORTANT: Remove all existing component checkboxes to avoid duplicates
-                // We'll create hidden inputs with unique values instead
                 document.querySelectorAll('.component-checkbox').forEach(cb => {
                     cb.disabled = true; // Disable so they won't be submitted
                 });
 
-                // Create hidden inputs for selected components (unique only)
-                const selectedComponentIds = [];
-                componentSelections.forEach((isChecked, componentId) => {
-                    if (isChecked) {
-                        selectedComponentIds.push(componentId);
+                // Create hidden inputs for selected components with their theme info
+                const form = this;
+
+                // Clear any previous temp inputs
+                document.querySelectorAll('.temp-component-input').forEach(input => input.remove());
+
+                // Collect all selected components with their theme IDs
+                const selectedComponents = [];
+
+                // Get all checkboxes (including hidden ones in other theme sections)
+                document.querySelectorAll('.component-checkbox').forEach(checkbox => {
+                    if (checkbox.checked) {
+                        selectedComponents.push({
+                            componentId: checkbox.dataset.componentId,
+                            themeId: checkbox.dataset.themeId
+                        });
                     }
                 });
 
-                // Remove duplicates (just in case)
-                const uniqueComponentIds = [...new Set(selectedComponentIds)];
+                console.log('Selected components with themes:', selectedComponents);
 
-                console.log('Unique selected component IDs:', uniqueComponentIds);
+                // Add hidden inputs for each selected component with proper indexing
+                selectedComponents.forEach((comp, index) => {
+                    // Create hidden input for component_id
+                    const componentInput = document.createElement('input');
+                    componentInput.type = 'hidden';
+                    componentInput.name = `components[${index}][component_id]`;
+                    componentInput.value = comp.componentId;
+                    componentInput.className = 'temp-component-input';
+                    form.appendChild(componentInput);
 
-                // Add hidden inputs for each unique component
-                const form = this;
-                uniqueComponentIds.forEach(componentId => {
-                    const hiddenInput = document.createElement('input');
-                    hiddenInput.type = 'hidden';
-                    hiddenInput.name = 'components[]';
-                    hiddenInput.value = componentId;
-                    hiddenInput.className = 'temp-component-input'; // Mark for cleanup
-                    form.appendChild(hiddenInput);
+                    // Create hidden input for theme_id
+                    const themeInput = document.createElement('input');
+                    themeInput.type = 'hidden';
+                    themeInput.name = `components[${index}][theme_id]`;
+                    themeInput.value = comp.themeId;
+                    themeInput.className = 'temp-component-input';
+                    form.appendChild(themeInput);
                 });
 
                 // Log form data

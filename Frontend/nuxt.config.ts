@@ -51,5 +51,21 @@ export default defineNuxtConfig({
   devServer: {
     host: '0.0.0.0',
     port: 3000
-  }
+  },
+  
+  // Vite configuration for multi-tenant virtual hosts
+  vite: {
+    server: {
+      hmr: {
+        clientPort: 3000,
+      },
+      allowedHosts: [
+        'localhost',
+        '127.0.0.1',
+        'abc.local',
+        'xyz.local',
+        '.local', // Allow all .local domains
+      ],
+    },
+  },
 })

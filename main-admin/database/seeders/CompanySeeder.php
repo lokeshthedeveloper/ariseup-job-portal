@@ -55,8 +55,11 @@ class CompanySeeder extends Seeder
             ],
         ];
 
-        foreach ($companies as $company) {
-            \App\Models\Company::create($company);
+        foreach ($companies as $companyData) {
+            \App\Models\Company::updateOrCreate(
+                ['name' => $companyData['name']],
+                $companyData
+            );
         }
     }
 }

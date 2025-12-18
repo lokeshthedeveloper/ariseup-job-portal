@@ -12,6 +12,7 @@ class Company extends Model
 
     protected $fillable = [
         'user_id',
+        'theme_id',
         'name',
         'company_type',
         'phone',
@@ -23,6 +24,7 @@ class Company extends Model
         'company_size',
         'location',
         'website',
+        'subdomain',
         'social_media_links',
         'job_categories',
         'about_us',
@@ -60,5 +62,32 @@ class Company extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the theme associated with the company
+     */
+    public function theme(): BelongsTo
+    {
+        return $this->belongsTo(Theme::class);
+    }
+
+    /**
+     * Get the selected theme for this company
+     */
+    public function selectedTheme()
+    {
+        return $this->belongsToMany(Theme::class, 'company_selected_themes')
+            ->withTimestamps();
+    }
+
+    /**
+     * Get the selected components with their theme information
+     */
+    public function selectedComponents()
+    {
+        return $this->belongsToMany(Component::class, 'company_selected_components')
+            ->withPivot('theme_id')
+            ->withTimestamps();
     }
 }

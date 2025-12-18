@@ -12,11 +12,13 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
-        \App\Models\User::create([
-            'name' => 'Ariseup Admin',
-            'email' => 'admin@ariseup.com',
-            'password' => bcrypt('password123'),
-            'role' => 'admin',
-        ]);
+        \App\Models\User::updateOrCreate(
+            ['email' => 'admin@ariseup.com'],
+            [
+                'name' => 'Ariseup Admin',
+                'password' => bcrypt('password123'),
+                'role' => 'admin',
+            ]
+        );
     }
 }
