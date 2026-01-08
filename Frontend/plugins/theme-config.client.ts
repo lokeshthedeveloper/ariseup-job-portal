@@ -1,13 +1,5 @@
-export default defineNuxtPlugin(async (nuxtApp) => {
-  // Only run on client-side initial load
-  if (process.client) {
-    const { fetchThemeConfig } = useThemeConfig()
-    
-    // Fetch theme configuration based on current hostname
-    try {
-      await fetchThemeConfig()
-    } catch (error) {
-      console.error('Failed to load theme configuration:', error)
-    }
-  }
+// This plugin is now simplified - the actual loading is handled in app.vue
+export default defineNuxtPlugin(() => {
+  // Plugin runs but doesn't block
+  // The app.vue component will handle the theme loading
 })

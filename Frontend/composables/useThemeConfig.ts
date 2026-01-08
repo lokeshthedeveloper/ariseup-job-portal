@@ -5,7 +5,11 @@ export interface ThemeComponent {
   id: number
   name: string
   slug: string
-  status: boolean
+  theme: {
+    id: number
+    name: string
+    slug: string
+  }
 }
 
 export interface ThemeConfig {
@@ -121,6 +125,14 @@ export const useThemeConfig = () => {
   }
 
   /**
+   * Get theme slug for a specific component
+   */
+  const getComponentTheme = (componentSlug: string): string | null => {
+    const component = getComponent(componentSlug)
+    return component?.theme?.slug || null
+  }
+
+  /**
    * Get theme slug
    */
   const themeSlug = computed(() => themeConfig.value?.theme.slug || null)
@@ -146,6 +158,7 @@ export const useThemeConfig = () => {
     clearThemeCache,
     hasComponent,
     getComponent,
+    getComponentTheme,
     themeSlug,
     company,
     enabledComponents

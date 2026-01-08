@@ -1,6 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  compatibilityDate: '2024-11-01',
+  compatibilityDate: '2024-12-01',
   devtools: { enabled: true },
   
   // Server-side rendering configuration
@@ -64,6 +64,7 @@ export default defineNuxtConfig({
         '127.0.0.1',
         'abc.local',
         'xyz.local',
+        'pqr.local',
         '.local', // Allow all .local domains
       ],
     },

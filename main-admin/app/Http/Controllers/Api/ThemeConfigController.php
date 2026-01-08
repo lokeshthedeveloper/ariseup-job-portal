@@ -24,7 +24,8 @@ class ThemeConfigController extends Controller
 
         $hostname = $request->input('hostname');
 
-        // Remove port if present (e.g., abc.local:3000 -> abc.local)
+        // Remove protocol and trailing slash if present
+        $hostname = rtrim($hostname, '/');
         $hostname = parse_url($hostname, PHP_URL_HOST) ?: $hostname;
 
         // Try to get from Redis cache first
@@ -58,14 +59,40 @@ class ThemeConfigController extends Controller
     private function fetchThemeConfig(string $hostname)
     {
         try {
+            // Extract potential subdomain (e.g., 'xyz' from 'xyz.abc.local')
+            $cleanHost = str_replace('www.', '', $hostname);
+            $parts = explode('.', $cleanHost);
+            $subdomainPart = (count($parts) > 2) ? $parts[0] : null;
+
             // Find company by website or subdomain
             $company = Company::where('is_active', true)
-                ->where(function ($query) use ($hostname) {
+                ->where(function ($query) use ($hostname, $cleanHost, $subdomainPart) {
+                    // Variations of the original hostname
                     $query->where('website', $hostname)
-                        ->orWhere('subdomain', $hostname)
-                        // Also support with/without www
+                        ->orWhere('website', 'http://' . $hostname)
+                        ->orWhere('website', 'https://' . $hostname)
+                        ->orWhere('website', 'http://' . $hostname . '/')
+                        ->orWhere('website', 'https://' . $hostname . '/')
                         ->orWhere('website', 'www.' . $hostname)
-                        ->orWhere('website', str_replace('www.', '', $hostname));
+                        ->orWhere('website', 'http://www.' . $hostname)
+                        ->orWhere('website', 'https://www.' . $hostname);
+
+                    // Variations of the clean hostname (without www)
+                    if ($cleanHost !== $hostname) {
+                        $query->orWhere('website', $cleanHost)
+                            ->orWhere('website', 'http://' . $cleanHost)
+                            ->orWhere('website', 'https://' . $cleanHost)
+                            ->orWhere('website', 'http://' . $cleanHost . '/')
+                            ->orWhere('website', 'https://' . $cleanHost . '/');
+                    }
+
+                    // Subdomain checks
+                    $query->orWhere('subdomain', $hostname)
+                        ->orWhere('subdomain', $cleanHost);
+
+                    if ($subdomainPart) {
+                        $query->orWhere('subdomain', $subdomainPart);
+                    }
                 })
                 ->with(['selectedComponents.themes'])
                 ->first();
@@ -149,6 +176,7 @@ class ThemeConfigController extends Controller
         ]);
 
         $hostname = $request->input('hostname');
+        $hostname = rtrim($hostname, '/');
         $hostname = parse_url($hostname, PHP_URL_HOST) ?: $hostname;
         $cacheKey = "theme_config:{$hostname}";
 
